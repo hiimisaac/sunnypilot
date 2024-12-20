@@ -29,11 +29,11 @@ DeveloperPanel::DeveloperPanel(SettingsWindow *parent) : ListWidget(parent) {
   addItem(madsToggle);
 
   // TODO-SP: Rename toggle
-  auto madsCruiseMainToggle = new ParamControl("MadsCruiseMain", tr("MADS: Cruise Main"), "", "");
-  addItem(madsCruiseMainToggle);
+  auto madsMainCruiseToggle = new ParamControl("MadsMainCruiseAllowed", tr("MADS: Toggle with Main Cruise"), tr("Note: For vehicles without LFA/LKAS button, disabling this will prevent lateral control engagement."), "");
+  addItem(madsMainCruiseToggle);
 
-  auto madsDisengageLateralOnBrakeToggle = new ParamControl("MadsDisengageLateralOnBrake", tr("MADS: Disengage Lateral on Brake"), "", "");
-  addItem(madsDisengageLateralOnBrakeToggle);
+  auto madsPauseLateralOnBrakeToggle = new ParamControl("MadsPauseLateralOnBrake", tr("MADS: Pause Lateral on Brake"), "", "");
+  addItem(madsPauseLateralOnBrakeToggle);
 
   auto madsUnifiedEngagementModeToggle = new ParamControl("MadsUnifiedEngagementMode", tr("MADS: Unified Engagement Mode"), "", "");
   addItem(madsUnifiedEngagementModeToggle);
