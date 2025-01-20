@@ -124,6 +124,10 @@ class ModularAssistiveDrivingSystem:
           self.events.add(EventName.silentLkasEnable)
 
       self.events.remove(EventName.preEnableStandstill)
+      self.events.remove(EventName.belowEngageSpeed)
+      self.events.remove(EventName.speedTooLow)
+      self.events.remove(EventName.cruiseDisabled)
+      self.events.remove(EventName.manualRestart)
 
     if self.events.has(EventName.pcmEnable) or self.events.has(EventName.buttonEnable):
       update_unified_engagement_mode()
