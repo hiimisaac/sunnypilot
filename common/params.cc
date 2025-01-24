@@ -201,7 +201,14 @@ std::unordered_map<std::string, uint32_t> keys = {
     {"Version", PERSISTENT},
 
     // --- sunnypilot params --- //
+    {"ApiCache_DriveStats", PERSISTENT},
+    {"CarParamsSP", CLEAR_ON_MANAGER_START | CLEAR_ON_ONROAD_TRANSITION},
+    {"CarParamsSPCache", CLEAR_ON_MANAGER_START},
+    {"CarParamsSPPersistent", PERSISTENT},
     {"EnableGithubRunner", PERSISTENT | BACKUP},
+    {"ModelRunnerTypeCache", CLEAR_ON_ONROAD_TRANSITION},
+    {"OffroadMode", CLEAR_ON_MANAGER_START},
+    {"OffroadMode_Status", CLEAR_ON_MANAGER_START},
 
     // MADS params
     {"Mads", PERSISTENT | BACKUP},
@@ -221,6 +228,14 @@ std::unordered_map<std::string, uint32_t> keys = {
     {"SunnylinkDongleId", PERSISTENT},
     {"SunnylinkdPid", PERSISTENT},
     {"SunnylinkEnabled", PERSISTENT},
+
+    // sunnypilot car specific params
+    {"HyundaiRadarTracks", PERSISTENT},
+    {"HyundaiRadarTracksConfirmed", PERSISTENT},
+    {"HyundaiRadarTracksPersistent", PERSISTENT},
+    {"HyundaiRadarTracksToggle", PERSISTENT},
+
+    {"DynamicExperimentalControl", PERSISTENT},
 };
 
 } // namespace

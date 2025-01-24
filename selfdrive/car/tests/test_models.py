@@ -1,4 +1,5 @@
 import capnp
+import copy
 import os
 import pytest
 import random
@@ -158,7 +159,9 @@ class TestCarModelBase(unittest.TestCase):
 
     cls.CarInterface, cls.CarController, cls.CarState, cls.RadarInterface = interfaces[cls.platform]
     cls.CP = cls.CarInterface.get_params(cls.platform,  cls.fingerprint, car_fw, experimental_long, docs=False)
+    cls.CP_SP = cls.CarInterface.get_params_sp(cls.CP, cls.platform,  cls.fingerprint, car_fw, experimental_long, docs=False)
     assert cls.CP
+    assert cls.CP_SP
     assert cls.CP.carFingerprint == cls.platform
 
     os.environ["COMMA_CACHE"] = DEFAULT_DOWNLOAD_CACHE_ROOT
@@ -168,7 +171,7 @@ class TestCarModelBase(unittest.TestCase):
     del cls.can_msgs
 
   def setUp(self):
-    self.CI = self.CarInterface(self.CP.copy(), self.CarController, self.CarState)
+    self.CI = self.CarInterface(self.CP.copy(), copy.deepcopy(self.CP_SP), self.CarController, self.CarState)
     assert self.CI
 
     Params().put_bool("OpenpilotEnabledToggle", self.openpilot_enabled)
@@ -202,10 +205,11 @@ class TestCarModelBase(unittest.TestCase):
     can_invalid_cnt = 0
     can_valid = False
     CC = structs.CarControl().as_reader()
+    CC_SP = structs.CarControlSP()
 
     for i, msg in enumerate(self.can_msgs):
       CS = self.CI.update(can_capnp_to_list((msg.as_builder().to_bytes(),)))
-      self.CI.apply(CC, msg.logMonoTime)
+      self.CI.apply(CC, CC_SP, msg.logMonoTime)
 
       if CS.canValid:
         can_valid = True
@@ -217,7 +221,7 @@ class TestCarModelBase(unittest.TestCase):
     self.assertEqual(can_invalid_cnt, 0)
 
   def test_radar_interface(self):
-    RI = self.RadarInterface(self.CP)
+    RI = self.RadarInterface(self.CP, self.CP_SP)
     assert RI
 
     # Since OBD port is multiplexed to bus 1 (commonly radar bus) while fingerprinting,
@@ -274,13 +278,13 @@ class TestCarModelBase(unittest.TestCase):
     if self.CP.notCar:
       self.skipTest("Skipping test for notCar")
 
-    def test_car_controller(car_control):
+    def test_car_controller(car_control, car_control_sp):
       now_nanos = 0
       msgs_sent = 0
-      CI = self.CarInterface(self.CP, self.CarController, self.CarState)
+      CI = self.CarInterface(self.CP, self.CP_SP, self.CarController, self.CarState)
       for _ in range(round(10.0 / DT_CTRL)):  # make sure we hit the slowest messages
         CI.update([])
-        _, sendcan = CI.apply(car_control, now_nanos)
+        _, sendcan = CI.apply(car_control, car_control_sp, now_nanos)
 
         now_nanos += DT_CTRL * 1e9
         msgs_sent += len(sendcan)
@@ -293,17 +297,18 @@ class TestCarModelBase(unittest.TestCase):
 
     # Make sure we can send all messages while inactive
     CC = structs.CarControl()
-    test_car_controller(CC.as_reader())
+    CC_SP = structs.CarControlSP()
+    test_car_controller(CC.as_reader(), CC_SP)
 
     # Test cancel + general messages (controls_allowed=False & cruise_engaged=True)
     self.safety.set_cruise_engaged_prev(True)
     CC = structs.CarControl(cruiseControl=structs.CarControl.CruiseControl(cancel=True))
-    test_car_controller(CC.as_reader())
+    test_car_controller(CC.as_reader(), CC_SP)
 
     # Test resume + general messages (controls_allowed=True & cruise_engaged=True)
     self.safety.set_controls_allowed(True)
     CC = structs.CarControl(cruiseControl=structs.CarControl.CruiseControl(resume=True))
-    test_car_controller(CC.as_reader())
+    test_car_controller(CC.as_reader(), CC_SP)
 
   # Skip stdout/stderr capture with pytest, causes elevated memory usage
   @pytest.mark.nocapture
@@ -387,7 +392,7 @@ class TestCarModelBase(unittest.TestCase):
     controls_allowed_prev = False
     CS_prev = car.CarState.new_message()
     checks = defaultdict(int)
-    selfdrived = SelfdriveD(CP=self.CP)
+    selfdrived = SelfdriveD(CP=self.CP, CP_SP=self.CP_SP)
     selfdrived.initialized = True
     for idx, can in enumerate(self.can_msgs):
       CS = self.CI.update(can_capnp_to_list((can.as_builder().to_bytes(), ))).as_reader()
